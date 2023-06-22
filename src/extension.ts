@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { isPubspecFile, readPackageLines, checkForUpdates, Dependency } from './analyze_dependencies';
+import { MyCodeActionProvider } from './quick_fix';
 
 export function activate(context: vscode.ExtensionContext) {
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection("myExtension");
@@ -31,8 +32,8 @@ export function activate(context: vscode.ExtensionContext) {
 					if (dependenciesList[i].updateAvailable) {
 						console.log(`Update available for ${dependenciesList[i].name}: ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`);
 
-						// TODO: Diagnostic
-						if (dependenciesList[i].offset !== undefined && dependencies[i].lineOffset !== undefined) {
+						// Diagnostic
+						if (dependenciesList[i].offset !== undefined && dependenciesList[i].lineOffset !== undefined) {
 							const activeEditor = vscode.window.activeTextEditor;
 
 							if (!activeEditor) {
@@ -43,8 +44,8 @@ export function activate(context: vscode.ExtensionContext) {
 							diagnosticCollection.clear();
 
 							// Create a diagnostic for the specified line
-							const range = new vscode.Range(document.positionAt(dependencies[i].offset! - dependencies[i].lineOffset!), document.positionAt(dependencies[i].offset!));
-							const diagnostic = new vscode.Diagnostic(range, `This package has a update from ${dependencies[i].currentVersion} -> ${dependencies[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
+							const range = new vscode.Range(document.positionAt(dependenciesList[i].offset! - dependenciesList[i].lineOffset!), document.positionAt(dependenciesList[i].offset!));
+							const diagnostic = new vscode.Diagnostic(range, `This package has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
 
 							diagnosticList.push(diagnostic);
 						}
@@ -55,11 +56,19 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				}
 
-				if (document !== undefined) {
+				if (document !== undefined && diagnosticList.length > 0) {
 					diagnosticCollection.set(document.uri, diagnosticList);
-				}
 
-				// TODO: CodeAction
+					// TODO: CodeAction
+					// const codeActionProvider = new CodeActionProvider();
+					// context.subscriptions.push(
+					// 	vscode.languages.registerCodeActionsProvider(
+					// 		"dart",
+					// 		codeActionProvider
+					// 	)
+					// );
+
+				}
 
 			}
 			else {
@@ -67,22 +76,29 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 
 		}),
+
+
+
+		vscode.languages.registerCodeActionsProvider('*', new MyCodeActionProvider())
+
 	);
 
-	vscode.workspace.onDidOpenTextDocument((document: vscode.TextDocument) => {
+	vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor | undefined) => {
 		// Check if the opened document is the specific file you want to target
-		console.log(document.fileName);
-		if (document.fileName === 'path/to/your/file') {
+		console.log('onDidOpenTextDocument');
+		// console.log(editor?.document.fileName);
+		if (editor !== undefined && isPubspecFile(editor.document.fileName)) {
 			// Execute your desired command here
-			vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies', document);
-		}
-		else {
-			vscode.window.showInformationMessage('Not a pubspec.yaml file (onDidOpenTextDocument)');
+			vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies');
+
+			// TODO: Implement Quick fix
+			// TODO: only run it once a day or so
 		}
 	});
 
 
 }
+
 
 // This method is called when your extension is deactivated
 export function deactivate() { }
