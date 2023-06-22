@@ -83,6 +83,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 	);
 
+	vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
+		// Check if the opened document is the specific file you want to target
+		console.log('onDidChangeTextDocument');
+		// console.log(event.document.fileName);
+		if (isPubspecFile(event.document.fileName)) {
+			// Execute your desired command here
+			vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies');
+		}
+	});
+
 	vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor | undefined) => {
 		// Check if the opened document is the specific file you want to target
 		console.log('onDidOpenTextDocument');
