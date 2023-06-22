@@ -16,6 +16,10 @@
       {
         "command": "pubspec-dependency-inspector.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "pubspec-dependency-inspector.analyzeDependencies",
+        "title": "Analyzes dependencies"
       }
     ]
   },
