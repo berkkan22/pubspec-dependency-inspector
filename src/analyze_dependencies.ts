@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as vscode from "vscode";
 import { fetchDependency } from "./network";
 import { off } from "process";
 
@@ -9,6 +10,14 @@ export interface Dependency {
     offset?: number;
     updateAvailable?: boolean;
     lineOffset?: number;
+    versionOffset?: number;
+    hasPrefix?: boolean;
+    latestVersionOffset?: number;
+}
+
+export interface CustomDiagnostic {
+	diagnostic: vscode.Diagnostic;
+	dependency: Dependency;
 }
 
 // return the name of the dependency
@@ -19,10 +28,16 @@ export function getDependencyName(input: string): string {
 }
 
 // return the version of the dependency
-export function getDependencyVersion(input: string): string {
+export function getDependencyVersion(input: string): [string, number, boolean] {
     let temp = input.split(":");
-    let version = temp[1].trim().substring(1);
-    return version;
+    let version = temp[1].trim();
+    let offset = temp[1].trim().length;
+    if(temp[1].includes("^")) {
+        version = version.substring(1);
+
+        return [version, offset, true];
+    }
+    return [version, offset, false];
 }
 
 const REGEX_DEPENDENCY =
@@ -72,10 +87,16 @@ export function readPackageLines(
             ) {
                 const lineOffset = line.length;
                 const name = getDependencyName(line);
-                const version = getDependencyVersion(line);
+                const temp = getDependencyVersion(line);
+                const version = temp[0];
+                const versionOffset = temp[1];
+                const hasPrefix = temp[2];
+
                 let dependencies: Dependency = { name: name, currentVersion: version, offset: counter - 2, lineOffset: lineOffset, };
                 dependencies.offset = counter - 2;
                 dependencies.lineOffset = lineOffset;
+                dependencies.versionOffset = versionOffset;
+                dependencies.hasPrefix = hasPrefix;
 
                 dependenciesList.push(dependencies);
             }
@@ -101,6 +122,7 @@ export async function checkForUpdates(dependencies: Dependency[]): Promise<Depen
                 //     `Update available for ${packageName}: ${currentPackageVersion} -> ${latestVersion}`
                 // );
                 dependencies[i].latestVersion = latestVersion;
+                dependencies[i].latestVersionOffset = latestVersion.length;
                 dependencies[i].updateAvailable = true;
             } else {
                 // console.log(

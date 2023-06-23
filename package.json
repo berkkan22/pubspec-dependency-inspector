@@ -22,6 +22,14 @@
       {
         "command": "pubspec-dependency-inspector.analyzeDependencies",
         "title": "Analyzes dependencies"
+      },
+      {
+        "command": "pubspec-dependency-inspector.updateDependency",
+        "title": "Updates dependency"
+      },
+      {
+        "command": "pubspec-dependency-inspector.updateAllDependencies",
+        "title": "Updates all dependencies"
       }
     ]
   },

@@ -1,13 +1,18 @@
 import * as vscode from 'vscode';
-import { isPubspecFile, readPackageLines, checkForUpdates, Dependency } from './analyze_dependencies';
+import { isPubspecFile, readPackageLines, checkForUpdates, Dependency, CustomDiagnostic } from './analyze_dependencies';
 import { MyCodeActionProvider } from './quick_fix';
+
+let customDiagnosticList: CustomDiagnostic[] = [];
 
 export function activate(context: vscode.ExtensionContext) {
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection("myExtension");
 
+
 	console.log('Congratulations, your extension "pubspec-dependency-inspector" is now active!');
 
 	context.subscriptions.push(
+		diagnosticCollection,
+
 		vscode.commands.registerCommand('pubspec-dependency-inspector.helloWorld', (uri: vscode.Uri) => {
 			vscode.window.showInformationMessage(`Hello World from Pubspec dependency inspector! ${uri}`);
 		}),
@@ -25,6 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 
 				let diagnosticList = [];
+				customDiagnosticList = [];
 
 				let document: vscode.TextDocument | undefined;
 
@@ -41,13 +47,19 @@ export function activate(context: vscode.ExtensionContext) {
 							}
 							document = activeEditor.document;
 							// Clear any existing diagnostics for the document
-							diagnosticCollection.clear();
+							// diagnosticCollection.clear();
 
 							// Create a diagnostic for the specified line
 							const range = new vscode.Range(document.positionAt(dependenciesList[i].offset! - dependenciesList[i].lineOffset!), document.positionAt(dependenciesList[i].offset!));
-							const diagnostic = new vscode.Diagnostic(range, `This package has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
+							let diagnostic = new vscode.Diagnostic(range, `This package has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
+							let customDiagnostic: CustomDiagnostic = {
+								diagnostic: diagnostic,
+								dependency: dependenciesList[i]
+							};
+							diagnostic.code = "updateDependency";
 
 							diagnosticList.push(diagnostic);
+							customDiagnosticList.push(customDiagnostic);
 						}
 
 					}
@@ -58,16 +70,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 				if (document !== undefined && diagnosticList.length > 0) {
 					diagnosticCollection.set(document.uri, diagnosticList);
-
-					// TODO: CodeAction
-					// const codeActionProvider = new CodeActionProvider();
-					// context.subscriptions.push(
-					// 	vscode.languages.registerCodeActionsProvider(
-					// 		"dart",
-					// 		codeActionProvider
-					// 	)
-					// );
-
 				}
 
 			}
@@ -77,38 +79,78 @@ export function activate(context: vscode.ExtensionContext) {
 
 		}),
 
+		vscode.commands.registerCommand('pubspec-dependency-inspector.updateDependency', async (diagnostic: vscode.Diagnostic) => {
+			let document: vscode.TextDocument | undefined;
 
+			for (let i = 0; i < customDiagnosticList.length; i++) {
+				if(diagnostic.message === customDiagnosticList[i].diagnostic.message) {
+					const dependency = customDiagnosticList[i].dependency;
 
-		vscode.languages.registerCodeActionsProvider('*', new MyCodeActionProvider())
+					const activeEditor = vscode.window.activeTextEditor;
+
+					if (!activeEditor) {
+						return;
+					}
+
+					document = activeEditor.document;
+
+					const edit = new vscode.WorkspaceEdit();
+					let range = new vscode.Range(document.positionAt(dependency.offset! - dependency.versionOffset!), document.positionAt(dependency.offset!));
+					edit.replace(document.uri, range, dependency.latestVersion!);
+					await vscode.workspace.applyEdit(edit);
+				
+					
+					let diagnosticList = diagnosticCollection.get(document.uri)?.map(diagnostic => diagnostic);
+					let index = diagnosticList?.findIndex(d => d ===  diagnostic);
+					if (diagnosticList !== undefined && index !== undefined) {
+						diagnosticList.splice(index, 1);
+						customDiagnosticList.splice(i, 1);
+						diagnosticCollection.set(document.uri, diagnosticList);
+					}
+
+					if(dependency.hasPrefix) {
+						for (let index = 0; index < customDiagnosticList.length; index++) {
+							const dependency = customDiagnosticList[index].dependency;
+							// const diagnostic = customDiagnosticList[index].diagnostic;
+
+							dependency.offset = dependency.offset! - 1;
+						}
+					}
+
+					let versionOffset = dependency.currentVersion.length - dependency.latestVersionOffset!;
+					if(versionOffset != 0) {
+						for (let index = 0; index < customDiagnosticList.length; index++) {
+							const dependency = customDiagnosticList[index].dependency;
+							// const diagnostic = customDiagnosticList[index].diagnostic;
+
+							dependency.offset = dependency.offset! - versionOffset;
+						}
+					}
+				}
+			}
+		}),
+
+		vscode.commands.registerCommand('pubspec-dependency-inspector.updateAllDependencies', async () => { }),
+
+		vscode.languages.registerCodeActionsProvider('yaml', new MyCodeActionProvider())
 
 	);
 
-	vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
-		// Check if the opened document is the specific file you want to target
-		console.log('onDidChangeTextDocument');
-		// console.log(event.document.fileName);
-		if (isPubspecFile(event.document.fileName)) {
-			// Execute your desired command here
-			vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies');
-		}
-	});
+	// vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+	// 	if (isPubspecFile(document.fileName)) {
+	// 		vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies');
+	// 	}
+	// });
 
 	vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor | undefined) => {
-		// Check if the opened document is the specific file you want to target
 		console.log('onDidOpenTextDocument');
-		// console.log(editor?.document.fileName);
 		if (editor !== undefined && isPubspecFile(editor.document.fileName)) {
-			// Execute your desired command here
 			vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies');
 
-			// TODO: Implement Quick fix
 			// TODO: only run it once a day or so
 		}
 	});
-
-
 }
-
 
 // This method is called when your extension is deactivated
 export function deactivate() { }
