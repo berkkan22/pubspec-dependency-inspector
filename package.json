@@ -25,11 +25,11 @@
       },
       {
         "command": "pubspec-dependency-inspector.updateDependency",
-        "title": "Updates dependency"
+        "title": "Update dependency"
       },
       {
         "command": "pubspec-dependency-inspector.updateAllDependencies",
-        "title": "Updates all dependencies"
+        "title": "Update all dependencies"
       }
     ]
   },

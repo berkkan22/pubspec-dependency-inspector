@@ -83,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
 			let document: vscode.TextDocument | undefined;
 
 			for (let i = 0; i < customDiagnosticList.length; i++) {
-				if(diagnostic.message === customDiagnosticList[i].diagnostic.message) {
+				if (diagnostic.message === customDiagnosticList[i].diagnostic.message) {
 					const dependency = customDiagnosticList[i].dependency;
 
 					const activeEditor = vscode.window.activeTextEditor;
@@ -98,17 +98,17 @@ export function activate(context: vscode.ExtensionContext) {
 					let range = new vscode.Range(document.positionAt(dependency.offset! - dependency.versionOffset!), document.positionAt(dependency.offset!));
 					edit.replace(document.uri, range, dependency.latestVersion!);
 					await vscode.workspace.applyEdit(edit);
-				
-					
+
+
 					let diagnosticList = diagnosticCollection.get(document.uri)?.map(diagnostic => diagnostic);
-					let index = diagnosticList?.findIndex(d => d ===  diagnostic);
+					let index = diagnosticList?.findIndex(d => d === diagnostic);
 					if (diagnosticList !== undefined && index !== undefined) {
 						diagnosticList.splice(index, 1);
 						customDiagnosticList.splice(i, 1);
 						diagnosticCollection.set(document.uri, diagnosticList);
 					}
 
-					if(dependency.hasPrefix) {
+					if (dependency.hasPrefix) {
 						for (let index = 0; index < customDiagnosticList.length; index++) {
 							const dependency = customDiagnosticList[index].dependency;
 							// const diagnostic = customDiagnosticList[index].diagnostic;
@@ -118,7 +118,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 
 					let versionOffset = dependency.currentVersion.length - dependency.latestVersionOffset!;
-					if(versionOffset != 0) {
+					if (versionOffset != 0) {
 						for (let index = 0; index < customDiagnosticList.length; index++) {
 							const dependency = customDiagnosticList[index].dependency;
 							// const diagnostic = customDiagnosticList[index].diagnostic;
@@ -130,7 +130,23 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}),
 
-		vscode.commands.registerCommand('pubspec-dependency-inspector.updateAllDependencies', async () => { }),
+		vscode.commands.registerCommand('pubspec-dependency-inspector.updateAllDependencies', async () => {
+			await vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies');
+
+			const activeEditor = vscode.window.activeTextEditor;
+
+			if (!activeEditor) {
+				return;
+			}
+
+			let document = activeEditor.document;
+
+			for (const diagnostic of diagnosticCollection.get(document.uri) ?? []) {
+				if (diagnostic.code === "updateDependency") {
+					await vscode.commands.executeCommand('pubspec-dependency-inspector.updateDependency', diagnostic);
+				}
+			}
+		}),
 
 		vscode.languages.registerCodeActionsProvider('yaml', new MyCodeActionProvider())
 
