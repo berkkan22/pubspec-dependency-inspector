@@ -1,5 +1,8 @@
 # Pubspec dependency inspector
 
+![Status](https://img.shields.io/github/deployments/sch-28/ikusa/production?label=Deployment)
+![Latest commit](https://img.shields.io/github/last-commit/berkkan22/pubspec-dependency-inspector)
+
 **Pubspec dependency inspector** is a VS Code extension for managing and updating dependencies in the Flutter framework. It provides a convenient way to check for newer versions of dependencies listed in the `pubspec.yaml` file and offers quick fixes to update them.
 
 ## Features
@@ -27,7 +30,7 @@
 6. Choose the desired quick fix to update the dependency in the `pubspec.yaml` file.
 7. Save the file to apply the changes.
 
-![usage](images/usage.gif)
+![usage](images/usage.mp4)
 
 
 ## Feedback and Support

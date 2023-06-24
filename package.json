@@ -2,7 +2,7 @@
   "name": "pubspec-dependency-inspector",
   "displayName": "Pubspec dependency inspector",
   "description": "Inspector for Flutter dependencies",
-  "publisher": "Berkkan Katirci",
+  "publisher": "berkkan",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.79.0"
