@@ -2,13 +2,26 @@
   "name": "pubspec-dependency-inspector",
   "displayName": "Pubspec dependency inspector",
   "description": "Inspector for Flutter dependencies",
+  "publisher": "Berkkan Katirci",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.79.0"
   },
   "categories": [
-    "Other"
+    "Linters"
   ],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#C80000",
+    "theme": "dark"
+  },
+  "bugs": {
+    "email": "berkkan22@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/berkkan22/pubspec-dependency-inspector"
+  },
   "activationEvents": [
     "onStartupFinished"
   ],

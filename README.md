@@ -1,71 +1,55 @@
-# pubspec-dependency-inspector README
+# Pubspec dependency inspector
 
-This is the README for your extension "pubspec-dependency-inspector". After writing up a brief description, we recommend including the following sections.
+**Pubspec dependency inspector** is a VS Code extension for managing and updating dependencies in the Flutter framework. It provides a convenient way to check for newer versions of dependencies listed in the `pubspec.yaml` file and offers quick fixes to update them.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Dependency Update: View a list of outdated dependencies in the `pubspec.yaml` file and easily update them to their latest versions using the command `Analyzes dependencies`.
+- Quick Fix: Receive code actions (quick fixes) for each outdated dependency, allowing you to update them with a single click.
+- Update all dependencies: Update all outdated dependencies at once using the command `Update all dependencies`.
+- Version Comparison: Compare the current version in the `pubspec.yaml` file with the latest version available on pub.dev to determine if an update is needed.
 
-For example if there is an image subfolder under your extension project workspace:
+## Installation
 
-\!\[feature X\]\(images/feature-x.png\)
+1. Launch Visual Studio Code.
+2. Go to the Extensions view by clicking on the square icon in the left sidebar or by pressing `Ctrl+Shift+X`.
+3. Search for "Pubspec dependency inspector" in the Marketplace search bar.
+4. Click on the "Install" button for the Extension Name extension.
+5. Once installed, the extension will be activated automatically.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Usage
 
-## Requirements
+1. Open a Flutter project in Visual Studio Code.
+2. Open the `pubspec.yaml` file.
+3. The extension will automatically analyze the file and detect outdated dependencies. If not you can use the command `Analyzes dependencies`.
+4. Diagnostics will be displayed in the Problems view, indicating which dependencies require updates.
+5. Click on a diagnostic to see the available quick fixes.
+6. Choose the desired quick fix to update the dependency in the `pubspec.yaml` file.
+7. Save the file to apply the changes.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+![usage](images/usage.gif)
 
-## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## Feedback and Support
 
-For example:
+If you encounter any issues or have suggestions for improvement, please feel free to raise an issue in the [GitHub repository](https://github.com/berkkan22/pubspec-dependency-inspector) or reach out to our support team at berkkan22@gmail.com.
 
-This extension contributes the following settings:
+## Future Plans and Ideas
+As I continue to improve and enhance the functionality of Pubspec dependency inspector, I have several exciting ideas and plans in mind. Here are some of the features I want considering for future updates:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+1. Dependency Information on Hover
+2. Integrated Browser View for Dependency Info
+3. Extension Search and Pubspec Integration
 
-## Known Issues
+## Contribution
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Contributions are welcome! If you have any ideas, improvements, or bug fixes, please submit a pull request to the [GitHub repository](https://github.com/berkkan22/pubspec-dependency-inspector).
 
-## Release Notes
+## License
 
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+This extension is licensed under the [MIT License](LICENSE).
 
 ---
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+**Enjoy!** We hope this extension enhances your Flutter development experience. If you find it useful, please consider leaving a rating and review in the Visual Studio Code Marketplace.
+Thank you for your support and happy coding!

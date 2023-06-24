@@ -18,7 +18,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 
 		vscode.commands.registerCommand('pubspec-dependency-inspector.analyzeDependencies', async () => {
-			vscode.window.showInformationMessage('Analyzing dependencies...');
+			const loadingSpinner = showLoadingSpinner();
+			
 			let dependenciesList: Dependency[] = [];
 
 			let file = vscode.window.activeTextEditor?.document.fileName.toString() ?? '';
@@ -51,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 							// Create a diagnostic for the specified line
 							const range = new vscode.Range(document.positionAt(dependenciesList[i].offset! - dependenciesList[i].lineOffset!), document.positionAt(dependenciesList[i].offset!));
-							let diagnostic = new vscode.Diagnostic(range, `This package has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
+							let diagnostic = new vscode.Diagnostic(range, `${dependenciesList[i].name} has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
 							let customDiagnostic: CustomDiagnostic = {
 								diagnostic: diagnostic,
 								dependency: dependenciesList[i]
@@ -76,6 +77,9 @@ export function activate(context: vscode.ExtensionContext) {
 			else {
 				vscode.window.showInformationMessage('Not a pubspec.yaml file');
 			}
+
+			loadingSpinner.text = "$(check) Analyze completed!";
+			setTimeout(() => loadingSpinner.hide(), 2000);
 
 		}),
 
@@ -152,11 +156,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	);
 
-	// vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
-	// 	if (isPubspecFile(document.fileName)) {
-	// 		vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies');
-	// 	}
-	// });
+	vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+		if (isPubspecFile(document.fileName)) {
+			vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies');
+		}
+	});
 
 	vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor | undefined) => {
 		console.log('onDidOpenTextDocument');
@@ -166,6 +170,17 @@ export function activate(context: vscode.ExtensionContext) {
 			// TODO: only run it once a day or so
 		}
 	});
+
+	const showLoadingSpinner = () => {
+		// Create a new status bar item
+		const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+
+		// Set the text and show the loading spinner
+		statusBarItem.text = "$(sync~spin) Analyzing dependencies...";
+		statusBarItem.show();
+
+		return statusBarItem;
+	};
 }
 
 // This method is called when your extension is deactivated
