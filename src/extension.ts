@@ -8,7 +8,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection("myExtension");
 
 
-	console.log('Congratulations, your extension "pubspec-dependency-inspector" is now active!');
+	// console.log('Congratulations, your extension "pubspec-dependency-inspector" is now active!');
 
 	context.subscriptions.push(
 		diagnosticCollection,
@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 				for (let i = 0; i < dependenciesList.length; i++) {
 					if (dependenciesList[i].updateAvailable) {
-						console.log(`Update available for ${dependenciesList[i].name}: ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`);
+						// console.log(`Update available for ${dependenciesList[i].name}: ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`);
 
 						// Diagnostic
 						if (dependenciesList[i].offset !== undefined && dependenciesList[i].lineOffset !== undefined) {
@@ -65,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 					}
 					else {
-						console.log(`No update available for ${dependenciesList[i].name}: ${dependenciesList[i].currentVersion}`);
+						// console.log(`No update available for ${dependenciesList[i].name}: ${dependenciesList[i].currentVersion}`);
 					}
 				}
 
@@ -163,7 +163,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor | undefined) => {
-		console.log('onDidOpenTextDocument');
+		// console.log('onDidOpenTextDocument');
 		if (editor !== undefined && isPubspecFile(editor.document.fileName)) {
 			vscode.commands.executeCommand('pubspec-dependency-inspector.analyzeDependencies');
 
