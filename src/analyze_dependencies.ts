@@ -7,17 +7,20 @@ export interface Dependency {
     name: string;
     currentVersion: string;
     latestVersion?: string;
-    offset?: number;
     updateAvailable?: boolean;
-    lineOffset?: number;
-    versionOffset?: number;
-    hasPrefix?: boolean;
+    dependencyStartOffset: number;
+    dependencyEndOffset: number;
+    currentVersionStartOffset: number;
+    currentVersionEndOffset: number;
+    latestVersionStartOffset?: number;
+    latestVersionEndOffset?: number;
+    hasPrefix: boolean;
     latestVersionOffset?: number;
 }
 
 export interface CustomDiagnostic {
-	diagnostic: vscode.Diagnostic;
-	dependency: Dependency;
+    diagnostic: vscode.Diagnostic;
+    dependency: Dependency;
 }
 
 // return the name of the dependency
@@ -32,7 +35,7 @@ export function getDependencyVersion(input: string): [string, number, boolean] {
     let temp = input.split(":");
     let version = temp[1].trim();
     let offset = temp[1].trim().length;
-    if(temp[1].includes("^")) {
+    if (temp[1].includes("^")) {
         version = version.substring(1);
 
         return [version, offset, true];
@@ -64,49 +67,72 @@ export function isPubPackageName(input: string): boolean {
 export function readPackageLines(
     filePath: string
 ): Dependency[] {
-    const fileContent = fs.readFileSync(filePath, "utf8");
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
 
     const dependenciesList: Dependency[] = [];
-    let line = "";
+    let line = '';
     let counter = 0;
     let dependenciesReached = false;
+
 
     for (let i = 0; i < fileContent.length; i++) {
         const char = fileContent[i];
         counter++;
 
-        if (char === "\n") {
-            line = line.trim();
-            if (line === "dependencies:") {
+        if (char === '\n' || char === '\r') {
+            if (line === 'dependencies:') {
                 dependenciesReached = true;
             }
-            if (
-                !line.startsWith("#") &&
-                isPubPackageName(line) &&
-                dependenciesReached
-            ) {
-                const lineOffset = line.length;
-                const name = getDependencyName(line);
-                const temp = getDependencyVersion(line);
-                const version = temp[0];
-                const versionOffset = temp[1];
-                const hasPrefix = temp[2];
 
-                let dependencies: Dependency = { name: name, currentVersion: version, offset: counter - 2, lineOffset: lineOffset, };
-                dependencies.offset = counter - 2;
-                dependencies.lineOffset = lineOffset;
-                dependencies.versionOffset = versionOffset;
-                dependencies.hasPrefix = hasPrefix;
-
-                dependenciesList.push(dependencies);
+            if (!line.startsWith('#') && isPubPackageName(line) && dependenciesReached) {
+                // TODO: get dependency name and version
+                var name = getDependencyName(line);
+                var version = getDependencyVersion(line);
+                var dependencyStart = counter - 1 - line.length + (line.length - line.trimStart().length);
+                var dependencyEnd = counter - 1 - (line.length - line.trimEnd().length);
+                var hasPrefix = version[2];
+                var versionStart = dependencyStart + name.length + 2;
+                var versionEnd = counter - 1;
+                console.log(`name: ${name}`);
+                console.log(`line length: ${line.length}`);
+                console.log(`dependencyStart: ${dependencyStart}`);
+                console.log(`dependencyEnd: ${dependencyEnd}`);
+                console.log(`versionStart: ${versionStart}`);
+                console.log(`versionEnd: ${versionEnd}`);
+                dependenciesList.push({ 
+                    name: name,
+                    currentVersion: version[0],
+                    dependencyStartOffset: dependencyStart,
+                    dependencyEndOffset: dependencyEnd,
+                    currentVersionStartOffset: versionStart,
+                    currentVersionEndOffset: versionEnd,
+                    hasPrefix: hasPrefix
+                });
             }
-            line = "";
+            //  provider: ^6.0.3  
+            // extensionHostProcess.js:105
+            // 319
+            // extensionHostProcess.js:105
+            // 318
+            // extensionHostProcess.js:105
+            // 317
+            line = '';
         } else {
             line += char;
         }
-    }
 
+    }
     return dependenciesList;
+}
+
+function getLineEnding(line: string): string | null {
+    const lastCharacters = line.slice(-2);
+    if (lastCharacters === '\r\n') {
+        return 'CRLF'; // Carriage Return + Line Feed
+    } else if (lastCharacters.endsWith('\r') || lastCharacters.endsWith('\n')) {
+        return 'LF'; // Line Feed or Carriage Return
+    }
+    return null; // Line ending not found
 }
 
 // check for updates for each dependency and return a list of the dependencies with the latest version

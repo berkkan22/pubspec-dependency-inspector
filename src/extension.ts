@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		vscode.commands.registerCommand('pubspec-dependency-inspector.analyzeDependencies', async () => {
 			const loadingSpinner = showLoadingSpinner();
-			
+
 			let dependenciesList: Dependency[] = [];
 
 			let file = vscode.window.activeTextEditor?.document.fileName.toString() ?? '';
@@ -37,35 +37,31 @@ export function activate(context: vscode.ExtensionContext) {
 
 				for (let i = 0; i < dependenciesList.length; i++) {
 					if (dependenciesList[i].updateAvailable) {
+						let dependency = dependenciesList[i];
 						// console.log(`Update available for ${dependenciesList[i].name}: ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`);
 
 						// Diagnostic
-						if (dependenciesList[i].offset !== undefined && dependenciesList[i].lineOffset !== undefined) {
-							const activeEditor = vscode.window.activeTextEditor;
+						const activeEditor = vscode.window.activeTextEditor;
 
-							if (!activeEditor) {
-								return;
-							}
-							document = activeEditor.document;
-							// Clear any existing diagnostics for the document
-							// diagnosticCollection.clear();
-
-							// Create a diagnostic for the specified line
-							const range = new vscode.Range(document.positionAt(dependenciesList[i].offset! - dependenciesList[i].lineOffset!), document.positionAt(dependenciesList[i].offset!));
-							let diagnostic = new vscode.Diagnostic(range, `${dependenciesList[i].name} has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
-							let customDiagnostic: CustomDiagnostic = {
-								diagnostic: diagnostic,
-								dependency: dependenciesList[i]
-							};
-							diagnostic.code = "updateDependency";
-
-							diagnosticList.push(diagnostic);
-							customDiagnosticList.push(customDiagnostic);
+						if (!activeEditor) {
+							return;
 						}
+						document = activeEditor.document;
+						// Clear any existing diagnostics for the document
+						// diagnosticCollection.clear();
 
-					}
-					else {
-						// console.log(`No update available for ${dependenciesList[i].name}: ${dependenciesList[i].currentVersion}`);
+						// Create a diagnostic for the specified line
+						// let range = new vscode.Range(document.positionAt(dependency.offset! - dependency.lineOffset!), document.positionAt(dependency.offset!));
+						let range = new vscode.Range(document.positionAt(dependency.dependencyStartOffset), document.positionAt(dependency.dependencyEndOffset));
+						let diagnostic = new vscode.Diagnostic(range, `${dependenciesList[i].name} has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
+						let customDiagnostic: CustomDiagnostic = {
+							diagnostic: diagnostic,
+							dependency: dependenciesList[i]
+						};
+						diagnostic.code = "updateDependency";
+
+						diagnosticList.push(diagnostic);
+						customDiagnosticList.push(customDiagnostic);
 					}
 				}
 
@@ -99,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
 					document = activeEditor.document;
 
 					const edit = new vscode.WorkspaceEdit();
-					let range = new vscode.Range(document.positionAt(dependency.offset! - dependency.versionOffset!), document.positionAt(dependency.offset!));
+					let range = new vscode.Range(document.positionAt(dependency.currentVersionStartOffset), document.positionAt(dependency.currentVersionEndOffset));
 					edit.replace(document.uri, range, dependency.latestVersion!);
 					await vscode.workspace.applyEdit(edit);
 
@@ -117,17 +113,23 @@ export function activate(context: vscode.ExtensionContext) {
 							const dependency = customDiagnosticList[index].dependency;
 							// const diagnostic = customDiagnosticList[index].diagnostic;
 
-							dependency.offset = dependency.offset! - 1;
+							dependency.dependencyStartOffset = dependency.dependencyStartOffset - 1;
+							dependency.dependencyEndOffset = dependency.dependencyEndOffset - 1;
+							dependency.currentVersionStartOffset = dependency.currentVersionStartOffset - 1;
+							dependency.currentVersionEndOffset = dependency.currentVersionEndOffset - 1;
 						}
 					}
 
 					let versionOffset = dependency.currentVersion.length - dependency.latestVersionOffset!;
-					if (versionOffset != 0) {
+					if (versionOffset !== 0) {
 						for (let index = 0; index < customDiagnosticList.length; index++) {
-							const dependency = customDiagnosticList[index].dependency;
+							const dependencyDiagnostic = customDiagnosticList[index].dependency;
 							// const diagnostic = customDiagnosticList[index].diagnostic;
-
-							dependency.offset = dependency.offset! - versionOffset;
+							// FIXME: This is not working
+							dependencyDiagnostic.dependencyStartOffset = dependencyDiagnostic.dependencyStartOffset - versionOffset;
+							dependencyDiagnostic.dependencyEndOffset = dependencyDiagnostic.dependencyEndOffset - versionOffset;
+							dependencyDiagnostic.currentVersionStartOffset = dependencyDiagnostic.currentVersionStartOffset - versionOffset;
+							dependencyDiagnostic.currentVersionEndOffset = dependencyDiagnostic.currentVersionEndOffset - versionOffset;
 						}
 					}
 				}
