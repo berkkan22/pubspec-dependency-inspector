@@ -8,11 +8,11 @@
     "vscode": "^1.79.0"
   },
   "categories": [
-    "Linters"
+    "Other"
   ],
   "icon": "images/icon.png",
   "galleryBanner": {
-    "color": "#C80000",
+    "color": "#808080",
     "theme": "dark"
   },
   "bugs": {
@@ -28,10 +28,6 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "pubspec-dependency-inspector.helloWorld",
-        "title": "Hello World"
-      },
       {
         "command": "pubspec-dependency-inspector.analyzeDependencies",
         "title": "Analyzes dependencies"

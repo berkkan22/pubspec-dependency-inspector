@@ -8,7 +8,7 @@
 ## Features
 
 - Dependency Update: View a list of outdated dependencies in the `pubspec.yaml` file and easily update them to their latest versions using the command `Analyzes dependencies`.
-- Quick Fix: Receive code actions (quick fixes) for each outdated dependency, allowing you to update them with a single click.
+- Quick Fix: Receive code actions (quick fixes) for each outdated dependency, allowing you to update them with a single click to the latest version.
 - Update all dependencies: Update all outdated dependencies at once using the command `Update all dependencies`.
 - Version Comparison: Compare the current version in the `pubspec.yaml` file with the latest version available on pub.dev to determine if an update is needed.
 
@@ -54,5 +54,5 @@ This extension is licensed under the [MIT License](LICENSE).
 
 ---
 
-**Enjoy!** We hope this extension enhances your Flutter development experience. If you find it useful, please consider leaving a rating and review in the Visual Studio Code Marketplace.
+**Enjoy!** I hope this extension enhances your Flutter development experience. If you find it useful, please consider leaving a rating and review in the Visual Studio Code Marketplace.
 Thank you for your support and happy coding!

@@ -13,9 +13,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		diagnosticCollection,
 
-		vscode.commands.registerCommand('pubspec-dependency-inspector.helloWorld', (uri: vscode.Uri) => {
-			vscode.window.showInformationMessage(`Hello World from Pubspec dependency inspector! ${uri}`);
-		}),
 
 		vscode.commands.registerCommand('pubspec-dependency-inspector.analyzeDependencies', async () => {
 			const loadingSpinner = showLoadingSpinner();
