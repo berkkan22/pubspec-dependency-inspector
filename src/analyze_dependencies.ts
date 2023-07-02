@@ -32,15 +32,22 @@ export function getDependencyName(input: string): string {
 
 // return the version of the dependency
 export function getDependencyVersion(input: string): [string, number, boolean] {
-    let temp = input.split(":");
-    let version = temp[1].trim();
-    let offset = temp[1].trim().length;
-    if (temp[1].includes("^")) {
-        version = version.substring(1);
-
-        return [version, offset, true];
+    const regex = /\^*(\d+\.\d+\.\d+)/;
+    const match = input.match(regex);
+    let versionNumber = '';
+    if (match && match.length > 1) {
+        versionNumber = match[0];
+        console.log(versionNumber); // Output: 1.0.0
+    } else {
+        console.log('No version number found in the line.');
     }
-    return [version, offset, false];
+
+    if(versionNumber.includes("^")){
+        return [versionNumber, versionNumber.length, true];
+    }
+    else{
+        return [versionNumber, versionNumber.length, false];
+    }
 }
 
 const REGEX_DEPENDENCY =
@@ -92,14 +99,14 @@ export function readPackageLines(
                 var dependencyEnd = counter - 1 - (line.length - line.trimEnd().length);
                 var hasPrefix = version[2];
                 var versionStart = dependencyStart + name.length + 2;
-                var versionEnd = counter - 1;
+                var versionEnd = versionStart + version[1];
                 console.log(`name: ${name}`);
                 console.log(`line length: ${line.length}`);
                 console.log(`dependencyStart: ${dependencyStart}`);
                 console.log(`dependencyEnd: ${dependencyEnd}`);
                 console.log(`versionStart: ${versionStart}`);
                 console.log(`versionEnd: ${versionEnd}`);
-                dependenciesList.push({ 
+                dependenciesList.push({
                     name: name,
                     currentVersion: version[0],
                     dependencyStartOffset: dependencyStart,

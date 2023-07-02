@@ -101,31 +101,30 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 					let diagnosticList = diagnosticCollection.get(document.uri)?.map(diagnostic => diagnostic);
-					let index = diagnosticList?.findIndex(d => d === diagnostic);
-					if (diagnosticList !== undefined && index !== undefined) {
-						diagnosticList.splice(index, 1);
+					let diagnosticIndex = diagnosticList?.findIndex(d => d === diagnostic);
+					if (diagnosticList !== undefined && diagnosticIndex !== undefined) {
+						diagnosticList.splice(diagnosticIndex, 1);
 						customDiagnosticList.splice(i, 1);
 						diagnosticCollection.set(document.uri, diagnosticList);
 					}
 
-					if (dependency.hasPrefix) {
-						for (let index = 0; index < customDiagnosticList.length; index++) {
+					if (dependency.hasPrefix && diagnosticIndex !== undefined) {
+						for (let index = diagnosticIndex; index < customDiagnosticList.length; index++) {
 							const dependency = customDiagnosticList[index].dependency;
 							// const diagnostic = customDiagnosticList[index].diagnostic;
 
 							dependency.dependencyStartOffset = dependency.dependencyStartOffset - 1;
 							dependency.dependencyEndOffset = dependency.dependencyEndOffset - 1;
-							dependency.currentVersionStartOffset = dependency.currentVersionStartOffset - 1;
-							dependency.currentVersionEndOffset = dependency.currentVersionEndOffset - 1;
+							dependency.currentVersionStartOffset = dependency.currentVersionStartOffset;
+							dependency.currentVersionEndOffset = dependency.currentVersionEndOffset;
 						}
 					}
 
 					let versionOffset = dependency.currentVersion.length - dependency.latestVersionOffset!;
-					if (versionOffset !== 0) {
-						for (let index = 0; index < customDiagnosticList.length; index++) {
+					if (versionOffset !== 0 && diagnosticIndex !== undefined) {
+						for (let index = diagnosticIndex; index < customDiagnosticList.length; index++) {
 							const dependencyDiagnostic = customDiagnosticList[index].dependency;
-							// const diagnostic = customDiagnosticList[index].diagnostic;
-							// FIXME: This is not working
+
 							dependencyDiagnostic.dependencyStartOffset = dependencyDiagnostic.dependencyStartOffset - versionOffset;
 							dependencyDiagnostic.dependencyEndOffset = dependencyDiagnostic.dependencyEndOffset - versionOffset;
 							dependencyDiagnostic.currentVersionStartOffset = dependencyDiagnostic.currentVersionStartOffset - versionOffset;
