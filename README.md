@@ -30,7 +30,9 @@
 6. Choose the desired quick fix to update the dependency in the `pubspec.yaml` file.
 7. Save the file to apply the changes.
 
-![usage](images/usage.mp4)
+
+https://github.com/berkkan22/pubspec-dependency-inspector/assets/46936985/ee88c55e-40b2-476c-9d8d-a0b7a34c5316
+
 
 
 ## Feedback and Support
