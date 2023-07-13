@@ -45,6 +45,7 @@ As I continue to improve and enhance the functionality of Pubspec dependency ins
 1. Dependency Information on Hover
 2. Integrated Browser View for Dependency Info
 3. Extension Search and Pubspec Integration
+4. Add setting page
 
 ## Contribution
 

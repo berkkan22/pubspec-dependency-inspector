@@ -32,20 +32,21 @@ export function getDependencyName(input: string): string {
 
 // return the version of the dependency
 export function getDependencyVersion(input: string): [string, number, boolean] {
-    const regex = /\^*(\d+\.\d+\.\d+)/;
+    const regex = /\^*(\d+\.\d+\.\d+)(\+\d)*/;
     const match = input.match(regex);
     let versionNumber = '';
     if (match && match.length > 1) {
         versionNumber = match[0];
         console.log(versionNumber); // Output: 1.0.0
+        console.log(match[1]); // Output: 1.0.0
     } else {
         console.log('No version number found in the line.');
     }
 
-    if(versionNumber.includes("^")){
+    if (versionNumber.includes("^")) {
         return [versionNumber, versionNumber.length, true];
     }
-    else{
+    else {
         return [versionNumber, versionNumber.length, false];
     }
 }
@@ -150,19 +151,34 @@ export async function checkForUpdates(dependencies: Dependency[]): Promise<Depen
         let response = await fetchDependency(dependencies[i]);
         if (response !== null) {
             let latestVersion = response.data.latest.version;
-            if (latestVersion !== dependencies[i].currentVersion) {
-                // console.log(
-                //     `Update available for ${packageName}: ${currentPackageVersion} -> ${latestVersion}`
-                // );
-                dependencies[i].latestVersion = latestVersion;
-                dependencies[i].latestVersionOffset = latestVersion.length;
-                dependencies[i].updateAvailable = true;
-            } else {
-                // console.log(
-                //     `No update available for ${packageName}: ${currentPackageVersion}`
-                // );
-                dependencies[i].latestVersion = '';
-                dependencies[i].updateAvailable = false;
+
+            if (dependencies[i].hasPrefix) {
+                latestVersion = '^' + latestVersion;
+                if (latestVersion !== dependencies[i].currentVersion) {
+                    dependencies[i].latestVersion = latestVersion;
+                    dependencies[i].latestVersionOffset = latestVersion.length;
+                    dependencies[i].updateAvailable = true;
+
+                } else {
+                    // console.log(
+                    //     `No update available for ${packageName}: ${currentPackageVersion}`
+                    // );
+                    dependencies[i].latestVersion = '';
+                    dependencies[i].updateAvailable = false;
+                }
+            }
+            else {
+                if (latestVersion !== dependencies[i].currentVersion) {
+                    dependencies[i].latestVersion = latestVersion;
+                    dependencies[i].latestVersionOffset = latestVersion.length;
+                    dependencies[i].updateAvailable = true;
+                } else {
+                    // console.log(
+                    //     `No update available for ${packageName}: ${currentPackageVersion}`
+                    // );
+                    dependencies[i].latestVersion = '';
+                    dependencies[i].updateAvailable = false;
+                }
             }
         }
     }
