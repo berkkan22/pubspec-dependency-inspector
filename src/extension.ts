@@ -5,6 +5,8 @@ import { MyCodeActionProvider } from './quick_fix';
 let customDiagnosticList: CustomDiagnostic[] = [];
 
 export function activate(context: vscode.ExtensionContext) {
+	let analyzingInProgress = false;
+
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection("myExtension");
 
 
@@ -15,65 +17,69 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 		vscode.commands.registerCommand('pubspec-dependency-inspector.analyzeDependencies', async () => {
-			const loadingSpinner = showLoadingSpinner();
+			if (!analyzingInProgress) {
+				analyzingInProgress = true;
 
-			let dependenciesList: Dependency[] = [];
+				const loadingSpinner = showLoadingSpinner();
 
-			let file = vscode.window.activeTextEditor?.document.fileName.toString() ?? '';
-			if (file !== '' && isPubspecFile(file)) {
-				let dependencies = readPackageLines(file);
+				let dependenciesList: Dependency[] = [];
 
-				if (dependencies.length > 0) {
-					dependenciesList = await checkForUpdates(dependencies);
-				}
+				let file = vscode.window.activeTextEditor?.document.fileName.toString() ?? '';
+				if (file !== '' && isPubspecFile(file)) {
+					let dependencies = readPackageLines(file);
 
-				let diagnosticList = [];
-				customDiagnosticList = [];
-
-				let document: vscode.TextDocument | undefined;
-
-				for (let i = 0; i < dependenciesList.length; i++) {
-					if (dependenciesList[i].updateAvailable) {
-						let dependency = dependenciesList[i];
-						// console.log(`Update available for ${dependenciesList[i].name}: ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`);
-
-						// Diagnostic
-						const activeEditor = vscode.window.activeTextEditor;
-
-						if (!activeEditor) {
-							return;
-						}
-						document = activeEditor.document;
-						// Clear any existing diagnostics for the document
-						// diagnosticCollection.clear();
-
-						// Create a diagnostic for the specified line
-						// let range = new vscode.Range(document.positionAt(dependency.offset! - dependency.lineOffset!), document.positionAt(dependency.offset!));
-						let range = new vscode.Range(document.positionAt(dependency.dependencyStartOffset), document.positionAt(dependency.dependencyEndOffset));
-						let diagnostic = new vscode.Diagnostic(range, `${dependenciesList[i].name} has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
-						let customDiagnostic: CustomDiagnostic = {
-							diagnostic: diagnostic,
-							dependency: dependenciesList[i]
-						};
-						diagnostic.code = "updateDependency";
-
-						diagnosticList.push(diagnostic);
-						customDiagnosticList.push(customDiagnostic);
+					if (dependencies.length > 0) {
+						dependenciesList = await checkForUpdates(dependencies);
 					}
+
+					let diagnosticList = [];
+					customDiagnosticList = [];
+
+					let document: vscode.TextDocument | undefined;
+
+					for (let i = 0; i < dependenciesList.length; i++) {
+						if (dependenciesList[i].updateAvailable) {
+							let dependency = dependenciesList[i];
+							// console.log(`Update available for ${dependenciesList[i].name}: ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`);
+
+							// Diagnostic
+							const activeEditor = vscode.window.activeTextEditor;
+
+							if (!activeEditor) {
+								return;
+							}
+							document = activeEditor.document;
+							// Clear any existing diagnostics for the document
+							// diagnosticCollection.clear();
+
+							// Create a diagnostic for the specified line
+							// let range = new vscode.Range(document.positionAt(dependency.offset! - dependency.lineOffset!), document.positionAt(dependency.offset!));
+							let range = new vscode.Range(document.positionAt(dependency.dependencyStartOffset), document.positionAt(dependency.dependencyEndOffset));
+							let diagnostic = new vscode.Diagnostic(range, `${dependenciesList[i].name} has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
+							let customDiagnostic: CustomDiagnostic = {
+								diagnostic: diagnostic,
+								dependency: dependenciesList[i]
+							};
+							diagnostic.code = "updateDependency";
+
+							diagnosticList.push(diagnostic);
+							customDiagnosticList.push(customDiagnostic);
+						}
+					}
+
+					if (document !== undefined && diagnosticList.length > 0) {
+						diagnosticCollection.set(document.uri, diagnosticList);
+					}
+
+				}
+				else {
+					vscode.window.showInformationMessage('Not a pubspec.yaml file');
 				}
 
-				if (document !== undefined && diagnosticList.length > 0) {
-					diagnosticCollection.set(document.uri, diagnosticList);
-				}
-
+				loadingSpinner.text = "$(check) Analyze completed!";
+				setTimeout(() => loadingSpinner.hide(), 1000);
+				setTimeout(() => analyzingInProgress = false, 900);
 			}
-			else {
-				vscode.window.showInformationMessage('Not a pubspec.yaml file');
-			}
-
-			loadingSpinner.text = "$(check) Analyze completed!";
-			setTimeout(() => loadingSpinner.hide(), 2000);
-
 		}),
 
 		vscode.commands.registerCommand('pubspec-dependency-inspector.updateDependency', async (diagnostic: vscode.Diagnostic) => {
