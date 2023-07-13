@@ -24,7 +24,7 @@
 
 1. Open a Flutter project in Visual Studio Code.
 2. Open the `pubspec.yaml` file.
-3. The extension will automatically analyze the file and detect outdated dependencies. If not you can use the command `Analyzes dependencies`.
+3. The extension will automatically analyze the file when saved and detect outdated dependencies. If not you can use the command `Analyzes dependencies`.
 4. Diagnostics will be displayed in the Problems view, indicating which dependencies require updates.
 5. Click on a diagnostic to see the available quick fixes.
 6. Choose the desired quick fix to update the dependency in the `pubspec.yaml` file.
@@ -45,6 +45,7 @@ As I continue to improve and enhance the functionality of Pubspec dependency ins
 1. Dependency Information on Hover
 2. Integrated Browser View for Dependency Info
 3. Extension Search and Pubspec Integration
+4. Add setting page
 
 ## Contribution
 
