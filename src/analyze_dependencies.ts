@@ -56,8 +56,7 @@ const REGEX_DEPENDENCY =
 
 // checks if the file is a pubspec.yaml file
 export function isPubspecFile(filePath: string): boolean {
-    const fileContent = fs.readFileSync(filePath, "utf8");
-    return isPubspecFileContent(fileContent);
+    return filePath.includes("pubspec.yaml") || filePath.includes("pubspec.yml")
 }
 
 // checks if the file content contains "dependencies" keyword
