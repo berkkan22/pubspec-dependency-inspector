@@ -34,7 +34,7 @@ export function getDependencyVersion(input: string): [string, number, boolean] {
 
 // checks if the file is a pubspec.yaml file
 export function isPubspecFile(filePath: string): boolean {
-    return filePath.includes("pubspec.yaml") || filePath.includes("pubspec.yml")
+    return filePath.includes("pubspec.yaml") || filePath.includes("pubspec.yml");
 }
 
 // checks if the file content contains "dependencies" keyword
