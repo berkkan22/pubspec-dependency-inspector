@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
-import { isPubspecFile, readPackageLines, checkForUpdates, Dependency, CustomDiagnostic } from './analyze_dependencies';
+import { isPubspecFile, readPackageLines, checkForUpdates } from './analyze_dependencies';
+import { Dependency } from './model/dependency';
+import { CustomDiagnostic } from './model/custom_dialog';
 import { MyCodeActionProvider } from './quick_fix';
 
 let customDiagnosticList: CustomDiagnostic[] = [];
@@ -9,31 +11,26 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection("myExtension");
 
-
-	// console.log('Congratulations, your extension "pubspec-dependency-inspector" is now active!');
-
 	context.subscriptions.push(
 		diagnosticCollection,
-
 
 		vscode.commands.registerCommand('pubspec-dependency-inspector.analyzeDependencies', async () => {
 			if (!analyzingInProgress) {
 				analyzingInProgress = true;
+				const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
 
-				let document: vscode.TextDocument | undefined;
+
+				let document: vscode.TextDocument;
 				const activeEditor = vscode.window.activeTextEditor;
 
 				if (!activeEditor) {
 					return;
 				}
 				document = activeEditor.document;
-				let file = document.fileName.toString() ?? '';
+				let file = activeEditor.document.fileName.toString();
 
 				let dependenciesList: Dependency[] = [];
-				
-				// const loadingSpinner = showLoadingSpinner();
-				const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
-				
+
 				if (file !== '' && isPubspecFile(file)) {
 					// Set the text and show the loading spinner
 					statusBarItem.text = "$(sync~spin) Analyzing dependencies...";
@@ -41,20 +38,22 @@ export function activate(context: vscode.ExtensionContext) {
 
 					let dependencies = readPackageLines(file);
 
-					if (dependencies.length > 0) {
-						dependenciesList = await checkForUpdates(dependencies);
+					if (dependencies.length <= 0) {
+						return;
+					}
+
+					dependenciesList = await checkForUpdates(dependencies);
+
+					if (dependenciesList.length <= 0) {
+						return;
 					}
 
 					let diagnosticList = [];
 					customDiagnosticList = [];
 
-
 					for (let i = 0; i < dependenciesList.length; i++) {
 						if (dependenciesList[i].updateAvailable) {
 							let dependency = dependenciesList[i];
-
-							// Clear any existing diagnostics for the document
-							// diagnosticCollection.clear();
 
 							let range = new vscode.Range(document.positionAt(dependency.dependencyStartOffset), document.positionAt(dependency.dependencyEndOffset));
 							let diagnostic = new vscode.Diagnostic(range, `${dependenciesList[i].name} has a update from ${dependenciesList[i].currentVersion} -> ${dependenciesList[i].latestVersion}`, vscode.DiagnosticSeverity.Warning);
@@ -69,7 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
 						}
 					}
 
-					if (document !== undefined && isPubspecFile(file) && diagnosticList.length > 0) {
+					if (diagnosticList.length > 0) {
 						diagnosticCollection.set(document.uri, diagnosticList);
 					}
 
@@ -87,59 +86,53 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 
 		vscode.commands.registerCommand('pubspec-dependency-inspector.updateDependency', async (diagnostic: vscode.Diagnostic) => {
-			let document: vscode.TextDocument | undefined;
-
 			const activeEditor = vscode.window.activeTextEditor;
 
 			if (!activeEditor) {
 				return;
 			}
 
-			document = activeEditor.document;
-			let file = document.fileName.toString() ?? '';
+			let document: vscode.TextDocument = activeEditor.document;
 
-			if (file !== '' && isPubspecFile(file)) {
+			for (let i = 0; i < customDiagnosticList.length; i++) {
+				if (diagnostic.message === customDiagnosticList[i].diagnostic.message) {
+					const dependency = customDiagnosticList[i].dependency;
 
-				for (let i = 0; i < customDiagnosticList.length; i++) {
-					if (diagnostic.message === customDiagnosticList[i].diagnostic.message) {
-						const dependency = customDiagnosticList[i].dependency;
+					const edit = new vscode.WorkspaceEdit();
+					let range = new vscode.Range(document.positionAt(dependency.currentVersionStartOffset), document.positionAt(dependency.currentVersionEndOffset));
+					edit.replace(document.uri, range, dependency.latestVersion!);
+					await vscode.workspace.applyEdit(edit);
 
-						const edit = new vscode.WorkspaceEdit();
-						let range = new vscode.Range(document.positionAt(dependency.currentVersionStartOffset), document.positionAt(dependency.currentVersionEndOffset));
-						edit.replace(document.uri, range, dependency.latestVersion!);
-						await vscode.workspace.applyEdit(edit);
+					let diagnosticList = diagnosticCollection.get(document.uri)?.map(diagnostic => diagnostic);
+					let diagnosticIndex = diagnosticList?.findIndex(d => d === diagnostic);
+					if (diagnosticList !== undefined && diagnosticIndex !== undefined) {
+						diagnosticList.splice(diagnosticIndex, 1);
+						customDiagnosticList.splice(i, 1);
+						diagnosticCollection.set(document.uri, diagnosticList);
+					}
 
+					// TODO: Check if this is needed
+					if (dependency.hasPrefix && diagnosticIndex !== undefined) {
+						for (let index = diagnosticIndex; index < customDiagnosticList.length; index++) {
+							const dependency = customDiagnosticList[index].dependency;
+							// const diagnostic = customDiagnosticList[index].diagnostic;
 
-						let diagnosticList = diagnosticCollection.get(document.uri)?.map(diagnostic => diagnostic);
-						let diagnosticIndex = diagnosticList?.findIndex(d => d === diagnostic);
-						if (diagnosticList !== undefined && diagnosticIndex !== undefined) {
-							diagnosticList.splice(diagnosticIndex, 1);
-							customDiagnosticList.splice(i, 1);
-							diagnosticCollection.set(document.uri, diagnosticList);
+							dependency.dependencyStartOffset = dependency.dependencyStartOffset - 1;
+							dependency.dependencyEndOffset = dependency.dependencyEndOffset - 1;
+							dependency.currentVersionStartOffset = dependency.currentVersionStartOffset;
+							dependency.currentVersionEndOffset = dependency.currentVersionEndOffset;
 						}
+					}
 
-						if (dependency.hasPrefix && diagnosticIndex !== undefined) {
-							for (let index = diagnosticIndex; index < customDiagnosticList.length; index++) {
-								const dependency = customDiagnosticList[index].dependency;
-								// const diagnostic = customDiagnosticList[index].diagnostic;
+					let versionOffset = dependency.currentVersion.length - dependency.latestVersionOffset!;
+					if (versionOffset !== 0 && diagnosticIndex !== undefined) {
+						for (let index = diagnosticIndex; index < customDiagnosticList.length; index++) {
+							const dependencyDiagnostic = customDiagnosticList[index].dependency;
 
-								dependency.dependencyStartOffset = dependency.dependencyStartOffset - 1;
-								dependency.dependencyEndOffset = dependency.dependencyEndOffset - 1;
-								dependency.currentVersionStartOffset = dependency.currentVersionStartOffset;
-								dependency.currentVersionEndOffset = dependency.currentVersionEndOffset;
-							}
-						}
-
-						let versionOffset = dependency.currentVersion.length - dependency.latestVersionOffset!;
-						if (versionOffset !== 0 && diagnosticIndex !== undefined) {
-							for (let index = diagnosticIndex; index < customDiagnosticList.length; index++) {
-								const dependencyDiagnostic = customDiagnosticList[index].dependency;
-
-								dependencyDiagnostic.dependencyStartOffset = dependencyDiagnostic.dependencyStartOffset - versionOffset;
-								dependencyDiagnostic.dependencyEndOffset = dependencyDiagnostic.dependencyEndOffset - versionOffset;
-								dependencyDiagnostic.currentVersionStartOffset = dependencyDiagnostic.currentVersionStartOffset - versionOffset;
-								dependencyDiagnostic.currentVersionEndOffset = dependencyDiagnostic.currentVersionEndOffset - versionOffset;
-							}
+							dependencyDiagnostic.dependencyStartOffset = dependencyDiagnostic.dependencyStartOffset - versionOffset;
+							dependencyDiagnostic.dependencyEndOffset = dependencyDiagnostic.dependencyEndOffset - versionOffset;
+							dependencyDiagnostic.currentVersionStartOffset = dependencyDiagnostic.currentVersionStartOffset - versionOffset;
+							dependencyDiagnostic.currentVersionEndOffset = dependencyDiagnostic.currentVersionEndOffset - versionOffset;
 						}
 					}
 				}
