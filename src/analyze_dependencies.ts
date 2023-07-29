@@ -7,7 +7,7 @@ const REGEX_DEPENDENCY_NAME =
     /^\s*(?!version|sdk|ref)\S+:\s*[<=>|^]*([0-9]+\.[0-9]+\.[0-9]+\+?\S*)/;
 const REGEX_DEPENDENCY_VERSION = /\^*(\d+\.\d+\.\d+(\+\d)*)/;
 
-const PUBSPEC_FILE_REGEX = /pubspec.(yaml|yml)$/;
+const PUBSPEC_FILE_REGEX = /pubspec\.(yaml|yml)$/;
 
 // return the name of the dependency
 export function getDependencyName(input: string): string {
@@ -131,12 +131,4 @@ export async function checkForUpdates(dependencies: Dependency[]): Promise<Depen
     }
 
     return dependencies;
-}
-
-export function newAdd(a: number, b: number) {
-    return add(a, b);
-}
-
-export function add(a: number, b: number) {
-    return a + b;
 }

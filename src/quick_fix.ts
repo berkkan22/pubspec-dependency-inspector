@@ -6,10 +6,6 @@ export class MyCodeActionProvider implements vscode.CodeActionProvider {
 		range: vscode.Range,
 		context: vscode.CodeActionContext,
 	): vscode.ProviderResult<vscode.CodeAction[]> {
-		// Check if the diagnostic is within the given range
-		// const applicableDiagnostics = context.diagnostics.filter(diagnostic =>
-		// 	diagnostic.range.intersection(range)
-		// );
 
 		const codeActions: vscode.CodeAction[] = [];
 
