@@ -1,10 +1,11 @@
 import * as fs from "fs";
 import { fetchDependency } from "./network";
 import { Dependency, DependencyFromPubDev } from "./model/dependency";
+import exp = require("constants");
 
 const REGEX_DEPENDENCY_NAME =
     /^\s*(?!version|sdk|ref)\S+:\s*[<=>|^]*([0-9]+\.[0-9]+\.[0-9]+\+?\S*)/;
-const REGEX_DEPENDENCY_VERSION = /\^*(\d+\.\d+\.\d+)/;
+const REGEX_DEPENDENCY_VERSION = /\^*(\d+\.\d+\.\d+(\+\d)*)/;
 
 // return the name of the dependency
 export function getDependencyName(input: string): string {
@@ -34,13 +35,9 @@ export function getDependencyVersion(input: string): [string, number, boolean] {
 
 // checks if the file is a pubspec.yaml file
 export function isPubspecFile(filePath: string): boolean {
-    return filePath.includes("pubspec.yaml") || filePath.includes("pubspec.yml");
+    return filePath === "pubspec.yaml" || filePath === "pubspec.yml";
 }
 
-// checks if the file content contains "dependencies" keyword
-export function isPubspecFileContent(fileContent: string): boolean {
-    return fileContent.includes("dependencies:");
-}
 
 // checks if the line is a dependency
 export function isPubPackageName(input: string): boolean {
@@ -48,11 +45,22 @@ export function isPubPackageName(input: string): boolean {
     return regexPattern.test(input);
 }
 
+export function readFileContent(filePath: string): string {
+    return fs.readFileSync(filePath, 'utf-8');
+}
+
+export function analyzeFileContent(filePath: string): Dependency[] {
+    let fileContent = readFileContent(filePath);
+
+    let dependencies = readPackageLines(fileContent);
+
+    return dependencies;
+}
+
 // read the file and return a list of the dependencies
 export function readPackageLines(
-    filePath: string
+    fileContent: string
 ): Dependency[] {
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
 
     const dependenciesList: Dependency[] = [];
     let line = '';
@@ -119,4 +127,12 @@ export async function checkForUpdates(dependencies: Dependency[]): Promise<Depen
     }
 
     return dependencies;
+}
+
+export function newAdd(a: number, b: number) {
+    return add(a, b);
+}
+
+export function add(a: number, b: number) {
+    return a + b;
 }
