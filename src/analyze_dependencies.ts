@@ -7,6 +7,8 @@ const REGEX_DEPENDENCY_NAME =
     /^\s*(?!version|sdk|ref)\S+:\s*[<=>|^]*([0-9]+\.[0-9]+\.[0-9]+\+?\S*)/;
 const REGEX_DEPENDENCY_VERSION = /\^*(\d+\.\d+\.\d+(\+\d)*)/;
 
+const PUBSPEC_FILE_REGEX = /pubspec.(yaml|yml)$/;
+
 // return the name of the dependency
 export function getDependencyName(input: string): string {
     let temp = input.split(":");
@@ -35,7 +37,7 @@ export function getDependencyVersion(input: string): [string, number, boolean] {
 
 // checks if the file is a pubspec.yaml file
 export function isPubspecFile(filePath: string): boolean {
-    return filePath === "pubspec.yaml" || filePath === "pubspec.yml";
+    return filePath.match(PUBSPEC_FILE_REGEX) !== null;
 }
 
 
@@ -72,7 +74,7 @@ export function readPackageLines(
         counter++;
 
         if (char === '\n' || char === '\r') {
-            if (line === 'dependencies:') {
+            if (line.includes('dependencies:')) {
                 dependenciesReached = true;
             }
 
@@ -113,17 +115,19 @@ export async function checkForUpdates(dependencies: Dependency[]): Promise<Depen
         if (response === null) {
             return [];
         }
-        
+
         let latestVersion = response.latestVersion;
+        latestVersion = '^' + latestVersion;
         if (latestVersion !== dependencies[i].currentVersion) {
             dependencies[i].latestVersion = latestVersion;
             dependencies[i].latestVersionOffset = latestVersion.length;
             dependencies[i].updateAvailable = true;
+
         } else {
-            dependencies[i].latestVersion = latestVersion;
+            dependencies[i].latestVersion = '';
             dependencies[i].updateAvailable = false;
         }
-        
+
     }
 
     return dependencies;

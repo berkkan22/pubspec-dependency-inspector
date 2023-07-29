@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { isPubspecFile, readPackageLines, checkForUpdates } from './analyze_dependencies';
+import { isPubspecFile, readPackageLines, checkForUpdates, analyzeFileContent } from './analyze_dependencies';
 import { Dependency } from './model/dependency';
 import { CustomDiagnostic } from './model/custom_dialog';
 import { MyCodeActionProvider } from './quick_fix';
@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 					statusBarItem.text = "$(sync~spin) Analyzing dependencies...";
 					statusBarItem.show();
 
-					let dependencies = readPackageLines(file);
+					let dependencies = analyzeFileContent(file);
 
 					if (dependencies.length <= 0) {
 						return;
@@ -78,7 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				else {
 					vscode.window.showInformationMessage('Not a pubspec.yaml file');
-					statusBarItem.text = "$(cross) Analyze failed!";
+					statusBarItem.text = "$(notebook-state-error) Analyze failed!";
 					setTimeout(() => statusBarItem.hide(), 1000);
 					setTimeout(() => analyzingInProgress = false, 900);
 				}

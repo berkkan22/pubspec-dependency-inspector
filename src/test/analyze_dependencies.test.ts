@@ -4,10 +4,10 @@ import { getDependencyName, getDependencyVersion, isPubPackageName, isPubspecFil
 suite('analyze_dependencies', () => {
 
     test("check if it is pubspec file", () => {
-        const filePathOne = "pubspec.yaml";
-        const filePathTwo = "pubspec.yml";
-        const filePathThree = "pubspec.yam";
-        const filePathFour = "pubspec.ymla";
+        const filePathOne = "path/to/some/pubspec.yaml";
+        const filePathTwo = "path/to/some/pubspec.yml";
+        const filePathThree = "path/to/some/pubspec.yam";
+        const filePathFour = "path/to/some/pubspec.ymla";
 
         assert.equal(true, isPubspecFile(filePathOne));
         assert.equal(true, isPubspecFile(filePathTwo));
@@ -74,14 +74,14 @@ suite('analyze_dependencies', () => {
 
     test("read package lines", () => {
         let fileContent = `
-        dependencies:
-            provider: ^6.0.5
-            hive: ^2.2.3
-            hive_flutter: 1.1.0 # Add this line
-            path_provider: 2.0.1
-            flutter_local_notifications: ^15.1.0+1
-            carousel_slider: ^4.2.1
-        `;
+            dependencies:
+                provider: ^6.0.5
+                hive: ^2.2.3
+                hive_flutter: 1.1.0 # Add this line
+                path_provider: 2.0.1
+                flutter_local_notifications: ^15.1.0+1
+                carousel_slider: ^4.2.1
+            `;
 
         let dependencies = readPackageLines(fileContent);
         assert.equal(dependencies.length, 6);
