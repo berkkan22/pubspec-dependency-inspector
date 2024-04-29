@@ -6,6 +6,10 @@ The Changelog follows the structure outlined in [Keep a Changelog](http://keepac
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.0.4] - 2024-04-29
+### Fixed
+- Improved analyzing packages [[#5](https://github.com/berkkan22/pubspec-dependency-inspector/pull/5) by [@ziyad-aljohani](https://github.com/ziyad-aljohani)]
+
 ## [0.0.3] - 2023-07-13
 ### Fixed
 - Only analyze once till finished
