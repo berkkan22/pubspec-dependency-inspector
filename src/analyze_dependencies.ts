@@ -145,41 +145,44 @@ function getLineEnding(line: string): string | null {
 // check for updates for each dependency and return a list of the dependencies with the latest version
 // and whether an update is available or not
 export async function checkForUpdates(dependencies: Dependency[]): Promise<Dependency[]> {
-    for (let i = 0; i < dependencies.length; i++) {
+    const batchSize = 4;
+    const batches = [];
 
-        let response = await fetchDependency(dependencies[i]);
-        if (response !== null) {
-            let latestVersion = response.data.latest.version;
+    for (let i = 0; i < dependencies.length; i += batchSize) {
+        const batch = dependencies.slice(i, i + batchSize);
+        batches.push(batch);
+    }
 
-            if (dependencies[i].hasPrefix) {
-                latestVersion = '^' + latestVersion;
-                if (latestVersion !== dependencies[i].currentVersion) {
-                    dependencies[i].latestVersion = latestVersion;
-                    dependencies[i].latestVersionOffset = latestVersion.length;
-                    dependencies[i].updateAvailable = true;
+    for (const batch of batches) {
+        const promises = batch.map(async (dependency) => {
+            const response = await fetchDependency(dependency);
+            if (response !== null) {
+                const latestVersion = response.data.latest.version;
 
+                if (dependency.hasPrefix) {
+                    const prefixedLatestVersion = '^' + latestVersion;
+                    if (prefixedLatestVersion !== dependency.currentVersion) {
+                        dependency.latestVersion = prefixedLatestVersion;
+                        dependency.latestVersionOffset = prefixedLatestVersion.length;
+                        dependency.updateAvailable = true;
+                    } else {
+                        dependency.latestVersion = '';
+                        dependency.updateAvailable = false;
+                    }
                 } else {
-                    // console.log(
-                    //     `No update available for ${packageName}: ${currentPackageVersion}`
-                    // );
-                    dependencies[i].latestVersion = '';
-                    dependencies[i].updateAvailable = false;
+                    if (latestVersion !== dependency.currentVersion) {
+                        dependency.latestVersion = latestVersion;
+                        dependency.latestVersionOffset = latestVersion.length;
+                        dependency.updateAvailable = true;
+                    } else {
+                        dependency.latestVersion = '';
+                        dependency.updateAvailable = false;
+                    }
                 }
             }
-            else {
-                if (latestVersion !== dependencies[i].currentVersion) {
-                    dependencies[i].latestVersion = latestVersion;
-                    dependencies[i].latestVersionOffset = latestVersion.length;
-                    dependencies[i].updateAvailable = true;
-                } else {
-                    // console.log(
-                    //     `No update available for ${packageName}: ${currentPackageVersion}`
-                    // );
-                    dependencies[i].latestVersion = '';
-                    dependencies[i].updateAvailable = false;
-                }
-            }
-        }
+        });
+
+        await Promise.all(promises);
     }
 
     return dependencies;
